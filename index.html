@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Library Book Store — open 24 hours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="stage"></div>
+<div class="fx dof" id="dof"></div>
+<div class="fx vignette"></div>
+<div class="fx grain"></div>
+<div class="fx scan"></div>
+
+<div id="hud" hidden>
+  <div class="osd tl" id="play">PLAY ▸ <span id="zone">NEW RELEASES · 0-9</span></div>
+  <div class="osd tr" id="clock">SP 0:00:00</div>
+  <div class="osd" id="hdg"></div>
+  <div class="pill" id="hint">Walk up to the open door and step inside &middot; <kbd>1</kbd> skips straight in &middot; <kbd>J</kbd> shop screen</div>
+  <div class="dot" id="dot"></div>
+  <div id="basket"><div>BASKET <b id="b-count">0</b>/5 · <kbd>B</kbd> list · <kbd>C</kbd> checkout</div><ul id="b-list"></ul></div>
+  <canvas id="map" width="44" height="262"></canvas>
+  <div id="toast"></div>
+  <div id="bar"><span><kbd>E</kbd> pick up</span><span><kbd>R</kbd> basket+</span><span><kbd>F</kbd> find</span><span><kbd>B</kbd> list</span><span><kbd>C</kbd> checkout</span><span><kbd>L</kbd> torch</span><span><kbd>X</kbd> open</span><span><kbd>N</kbd> neon</span><span><kbd>H</kbd> rentals</span><span><kbd>P</kbd> settings</span></div>
+  <button id="rentbtn">PICK UP</button>
+  <button id="addbtn">+ BASKET</button>
+  <button id="favbtn">♥ FAV</button>
+  <button id="openbtn">OPEN BOOK</button>
+  <button id="prevbtn">◂ BACK</button>
+  <button id="ratebtn">RATE ★</button>
+  <button id="menubtn" title="Menu">&#9776; MENU</button>
+  <div id="stick" hidden><div id="knob"></div></div>
+  <div id="tbar"><button data-t="find">FIND</button><button data-t="basket">BASKET</button><button data-t="torch">TORCH</button><button data-t="sprint">SPRINT</button><button data-t="menu">MENU</button></div>
+  <div class="tape" id="tape">
+    <div class="k">TAPE INFO · <span id="t-id"></span></div>
+    <div class="title" id="t-title"></div>
+    <div class="k rent">LAST RENTED <span id="t-rent"></span></div>
+    <hr>
+    <dl>
+      <dt>YEAR</dt><dd id="t-year"></dd>
+      <dt>GENRE</dt><dd id="t-genre"></dd>
+      <dt>DIR.</dt><dd id="t-dir"></dd>
+      <dt>CAST</dt><dd id="t-cast"></dd>
+      <dt>PLOT</dt><dd id="t-plot"></dd>
+    </dl>
+    <div class="k addk">PRESS <kbd>E</kbd> TO PICK UP</div>
+  </div>
+</div>
+
+<div id="ui" hidden>
+  <div class="panel" id="p-find" hidden><h2>TAPE FINDER</h2><input id="q" type="text" placeholder="Title, genre, cast..." autocomplete="off"><div id="chips"><button data-f="all">All</button><button data-f="fav">♥ Favourites</button><button data-f="unseen">Unseen</button><button data-f="unread">Unread</button><button data-f="totd">Tape of the day</button></div><ul id="r"></ul><button class="x">Close</button></div>
+  <div class="panel" id="p-set" hidden><h2>SETTINGS</h2>
+    <label>Brightness <input id="s-bri" type="range" min="0.6" max="2" step="0.05" value="1"></label>
+    <label>Mouse sensitivity <input id="s-sens" type="range" min="0.4" max="2.5" step="0.1" value="1"></label>
+    <label>Field of view <input id="s-fov" type="range" min="-18" max="22" step="1" value="0"></label>
+    <div class="row"><button data-a="vhs">VHS look (V)</button><button data-a="torch">Torch (L)</button><button data-a="dark">Lights out (K)</button><button data-a="hum">Store hum (M)</button><button data-a="flick">Light flicker</button><button data-a="find">Find a tape (F)</button><button data-a="basket">Basket list (B)</button><button data-a="out">Checkout (C)</button><button data-a="neon">Neon theme (N)</button><button data-a="party">Party lights (Y)</button><button data-a="radio">Radio (O)</button><button data-a="shop">Shop screen (J)</button><button data-a="rain">Rain outside</button><button data-a="reset">Reset saved data</button></div>
+    <div class="row"><button data-a="hist">My rentals (H)</button><button data-a="rand">Surprise me (U)</button></div>
+    <div class="row row3"><button data-j="1">New</button><button data-j="2">Action</button><button data-j="3">Comedy</button><button data-j="4">Drama</button><button data-j="5">Thriller</button><button data-j="6">Horror</button><button data-j="7">Reading room</button></div>
+    <button class="x">Resume</button></div>
+  <div class="panel" id="p-hist" hidden><h2>MY RENTALS</h2><p id="h-stats" class="sub2"></p><ul id="h-list"></ul><p id="h-fav" class="sub2"></p><button class="x">Close</button></div>
+  <div class="panel" id="p-rec" hidden><h2>RECEIPT</h2><small id="rc-no"></small><ul id="rc-list"></ul><div class="tot"><span>TOTAL</span><b id="rc-tot"></b></div><p>Due back: <b id="rc-due"></b></p><p class="sub2">Be kind, rewind.</p><button class="x">Close</button></div>
+</div>
+
+<div id="shop" hidden>
+  <header class="sh-head">
+    <div class="sh-logo"><i class="moon"></i><b>LIBRARY</b><span>BOOK STORE</span></div>
+    <input id="sh-q" type="search" placeholder="Search title, genre, cast, plot..." autocomplete="off">
+    <button id="sh-cartbtn" class="sh-btn">BASKET <b id="sh-n">0</b>/5</button>
+    <button id="sh-go" class="sh-go">WALK INTO THE STORE &#9656;</button>
+  </header>
+  <div class="sh-sub"><span>OPEN 24 HOURS</span><span>$3.99 &middot; 2 NIGHTS</span><span>BE KIND, REWIND</span><span id="sh-count"></span></div>
+  <div class="sh-chips" id="sh-chips"></div>
+  <div class="sh-body">
+    <main id="sh-grid" class="sh-main"></main>
+    <aside id="sh-cart">
+      <h3>YOUR BASKET <b id="sh-cn">0</b>/5</h3>
+      <ul id="sh-list"></ul>
+      <div class="sh-tot"><span>TOTAL</span><b id="sh-tot">$0.00</b></div>
+      <div class="sh-act"><button id="sh-out" class="sh-go">CHECKOUT</button><button id="sh-clear" class="sh-btn">Clear</button></div>
+      <div id="sh-rec" hidden>
+        <h3>RECEIPT <small id="sh-rno"></small></h3>
+        <ul id="sh-rlist"></ul>
+        <div class="sh-tot"><span>PAID</span><b id="sh-rtot"></b></div>
+        <p>Due back: <b id="sh-rdue"></b></p>
+        <p class="sh-dim">Be kind, rewind.</p>
+        <button id="sh-rok" class="sh-btn">Keep browsing</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="start">
+  <div class="card">
+    <div class="crest"><i class="moon"></i><b>LIBRARY</b><span>BOOK STORE</span></div>
+    <p class="sub">Open 24 hours. Be kind, rewind.</p>
+    <button id="enter">Click to walk up to the shop</button>
+    <ul class="keys">
+      <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to walk</li>
+      <li><kbd>Shift</kbd> to hurry</li>
+      <li>Mouse to look · <kbd>esc</kbd> frees the cursor</li>
+      <li>Touch: left thumb walks, right thumb looks, tap a tape to pick it up</li>
+      <li><kbd>E</kbd> pick up a tape and look at it · <kbd>R</kbd> basket · <kbd>C</kbd> checkout</li>
+      <li><kbd>L</kbd> torch · <kbd>1</kbd>-<kbd>7</kbd> jump to an aisle (7 = reading room) · <kbd>V</kbd> retro look</li>
+      <li><kbd>F</kbd> find a tape · <kbd>P</kbd> settings · <kbd>K</kbd> lights out</li>
+      <li><kbd>H</kbd> my rentals · <kbd>U</kbd> surprise me</li>
+      <li>Holding a tape: <kbd>X</kbd> opens it like a book (6 pages), <kbd>Z</kbd> back, <kbd>1</kbd>-<kbd>5</kbd> rate, <kbd>T</kbd> tag</li>
+      <li><kbd>N</kbd> neon theme · <kbd>Y</kbd> party lights · <kbd>I</kbd> reading-room fans · <kbd>J</kbd> shop screen · <kbd>O</kbd> radio · <kbd>G</kbd> favourite</li>
+    </ul>
+    <p class="err" id="err" hidden>Three.js did not load. Check your internet connection and reload.</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>')</script>
+<script src="js/main.js"></script>
+</body>
+</html>
